@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperCar Price Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="/" style="text-decoration: none; color: inherit;">SuperCar Predictor</a>
+            </div>
+            <div class="nav-auth" id="navAuth">
+                <a href="/auth/login" class="btn-secondary">Login</a>
+                <a href="/auth/register" class="btn-primary">Register</a>
+            </div>
+            <div class="nav-user" id="navUser" style="display: none;">
+                <span id="userInfo"></span>
+                <button class="btn-secondary" onclick="logout()">Logout</button>
+            </div>
+        </nav>
+          <!-- Main Content -->
+        <main class="main-content">
+            <section class="welcome-section" id="welcomeSection" style="display: none;">
+                <div class="welcome-container">
+                    <div class="welcome-header">
+                        <h1>Welcome to SuperCar Predictor</h1>
+                        <p>Get accurate price predictions for luxury and supercars</p>
+                    </div>
+                    <div class="welcome-content">
+                        <div class="feature-card">
+                            <h3>Accurate Predictions</h3>
+                            <p>Our advanced machine learning model provides precise car valuations based on detailed specifications.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>Comprehensive Data</h3>
+                            <p>Enter detailed information about your vehicle including performance specs, condition, and history.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>Easy to Use</h3>
+                            <p>Simple form-based interface makes it easy to get your car's value in seconds.</p>
+                        </div>
+                    </div>
+                    <div class="cta-section">
+                        <p>Sign in or register to get started with your car valuation today!</p>
+                        <div class="cta-buttons">
+                            <a href="/auth/login" class="btn-primary">Login</a>
+                            <a href="/auth/register" class="btn-primary">Register</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/auth-utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/home.js') }}"></script>
+</body>
+</html>

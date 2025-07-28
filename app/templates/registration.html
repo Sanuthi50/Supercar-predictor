@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SuperCar Price Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+    <div class="auth-page">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="{{ url_for('main.index') }}">SuperCar Predictor</a>
+            </div>
+            <div class="nav-auth">
+                <a href="{{ url_for('auth.login_page') }}" class="btn-secondary">Login</a>
+            </div>
+        </nav>
+
+        <!-- Registration Form -->
+        <main class="auth-main">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <h1>Create Account</h1>
+                    <p>Join SuperCar Predictor to access advanced price prediction</p>
+                </div>
+
+                <form id="registerForm" class="auth-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="username">Username *</label>
+                            <input type="text" id="username" name="username" required 
+                                   placeholder="Choose a username">
+                            <div class="error-message" id="usernameError"></div>
+                            <div class="field-hint">3-150 characters, letters, numbers, and underscores only</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" name="email" required 
+                                   placeholder="Enter your email">
+                            <div class="error-message" id="emailError"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input type="password" id="password" name="password" required 
+                               placeholder="Create a secure password">
+                        <div class="error-message" id="passwordError"></div>
+                        <div class="field-hint">Minimum 6 characters</div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="first_name">First Name</label>
+                            <input type="text" id="first_name" name="first_name" 
+                                   placeholder="Your first name">
+                            <div class="error-message" id="firstNameError"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="last_name">Last Name</label>
+                            <input type="text" id="last_name" name="last_name" 
+                                   placeholder="Your last name">
+                            <div class="error-message" id="lastNameError"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn-primary btn-full" id="registerBtn">
+                            <span class="btn-text">Create Account</span>
+                            <div class="btn-spinner" style="display: none;"></div>
+                        </button>
+                    </div>
+
+                    <div class="general-error" id="generalError" style="display: none;">
+                        <div class="error-content">
+                            <strong>Error:</strong> <span id="errorText"></span>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Already have an account? 
+                        <a href="{{ url_for('auth.login_page') }}" class="auth-link">Sign in here</a>
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/auth-common.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/registration.js') }}"></script>
+</body>
+</html>

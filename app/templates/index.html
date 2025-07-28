@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Price Prediction - SuperCar Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <a href="/" style="text-decoration: none; color: inherit;">SuperCar Predictor</a>
+            </div>
+            <div class="nav-auth" id="navAuth">
+                <a href="/auth/login" class="btn-secondary">Login</a>
+                <a href="/auth/register" class="btn-primary">Register</a>
+            </div>
+            <div class="nav-user" id="navUser">
+                <span id="userInfo"></span>
+                <button class="btn-secondary" onclick="logout()">Logout</button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Prediction Form -->
+            <section class="prediction-section" id="predictionSection" style="display: none;">
+                <div class="prediction-container">
+                    <div class="section-header">
+                        <h2>Car Price Prediction</h2>
+                        <p>Enter vehicle specifications for accurate price prediction</p>
+                    </div>
+                    <form id="carForm" class="prediction-form">
+                        <div class="form-grid">
+                            <div class="form-section">
+                                <h3>Basic Information</h3>
+                                <div class="form-group">
+                                    <label for="year">Year</label>
+                                    <input type="number" id="year" name="year" min="1900" max="2030" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="brand">Brand</label>
+                                    <select id="brand" name="brand" required>
+                                        <option value="">Select Brand</option>
+                                        <option value="McLaren">McLaren</option>
+                                        <option value="Aston Martin">Aston Martin</option>
+                                        <option value="Koenigsegg">Koenigsegg</option>
+                                        <option value="Bugatti">Bugatti</option>
+                                        <option value="Pagani">Pagani</option>
+                                        <option value="Lamborghini">Lamborghini</option>
+                                        <option value="Ferrari">Ferrari</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="model">Model</label>
+                                    <select id="model" name="model" required>
+                                        <option value="">Select Model</option>
+                                        <option value="600LT">600LT</option>
+                                        <option value="Valhalla">Valhalla</option>
+                                        <option value="Jesko">Jesko</option>
+                                        <option value="Chiron">Chiron</option>
+                                        <option value="Zonda">Zonda</option>
+                                        <option value="Vantage">Vantage</option>
+                                        <option value="Huayra">Huayra</option>
+                                        <option value="Veyron">Veyron</option>
+                                        <option value="Aventador">Aventador</option>
+                                        <option value="Sian">Sian</option>
+                                        <option value="Agera">Agera</option>
+                                        <option value="720S">720S</option>
+                                        <option value="Urus">Urus</option>
+                                        <option value="P1">P1</option>
+                                        <option value="Portofino">Portofino</option>
+                                        <option value="Regera">Regera</option>
+                                        <option value="DB11">DB11</option>
+                                        <option value="488 GTB">488 GTB</option>
+                                        <option value="Roma">Roma</option>
+                                        <option value="SF90">SF90</option>
+                                        <option value="F8 Tributo">F8 Tributo</option>
+                                        <option value="GT">GT</option>
+                                        <option value="Huracan">Huracan</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="color">Color</label>
+                                    <select id="color" name="color" required>
+                                        <option value="">Select Color</option>
+                                        <option value="Black">Black</option>
+                                        <option value="White">White</option>
+                                        <option value="Silver">Silver</option>
+                                        <option value="Red">Red</option>
+                                        <option value="Blue">Blue</option>
+                                        <option value="Green">Green</option>
+                                        <option value="Yellow">Yellow</option>
+                                        <option value="Orange">Orange</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <h3>Performance Specifications</h3>
+                                <div class="form-group">
+                                    <label for="engine_config">Engine Configuration</label>
+                                    <select id="engine_config" name="engine_config" required>
+                                        <option value="">Select Configuration</option>
+                                        <option value="W16">W16</option>
+                                        <option value="V8">V8</option>
+                                        <option value="V10">V10</option>
+                                        <option value="V12">V12</option>
+                                        <option value="Electric">Electric</option>
+                                        <option value="Hybrid">Hybrid</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="horsepower">Horsepower</label>
+                                    <input type="number" id="horsepower" name="horsepower" min="0" max="2000" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="torque">Torque (lb-ft)</label>
+                                    <input type="number" id="torque" name="torque" min="0" max="2000" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="weight_kg">Weight (kg)</label>
+                                    <input type="number" id="weight_kg" name="weight_kg" min="500" max="5000" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="zero_to_60_s">0-60 mph (seconds)</label>
+                                    <input type="number" id="zero_to_60_s" name="zero_to_60_s" step="0.1" min="1" max="20" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="top_speed_mph">Top Speed (mph)</label>
+                                    <input type="number" id="top_speed_mph" name="top_speed_mph" min="50" max="300" required>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <h3>Vehicle Features</h3>
+                                <div class="form-group">
+                                    <label for="num_doors">Number of Doors</label>
+                                    <select id="num_doors" name="num_doors" required>
+                                        <option value="">Select Doors</option>
+                                        <option value="1">1 Door</option>
+                                        <option value="2">2 Doors</option>
+                                        <option value="3">3 Doors</option>
+                                        <option value="4">4 Doors</option>
+                                        <option value="5">5 Doors</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="transmission">Transmission</label>
+                                    <select id="transmission" name="transmission" required>
+                                        <option value="">Select Transmission</option>
+                                        <option value="Manual">Manual</option>
+                                        <option value="Automatic">Automatic</option>
+                                        <option value="dual-clutch">Dual-Clutch</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="drivetrain">Drivetrain</label>
+                                    <select id="drivetrain" name="drivetrain" required>
+                                        <option value="">Select Drivetrain</option>
+                                        <option value="RWD">Rear-Wheel Drive</option>
+                                        <option value="AWD">All-Wheel Drive</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="market_region">Market Region</label>
+                                    <select id="market_region" name="market_region" required>
+                                        <option value="">Select Region</option>
+                                        <option value="North America">North America</option>
+                                        <option value="Europe">Europe</option>
+                                        <option value="Asia">Asia</option>
+                                        <option value="Middle East">Middle East</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <h3>Vehicle History & Condition</h3>
+                                <div class="form-group">
+                                    <label for="mileage">Mileage</label>
+                                    <input type="number" id="mileage" name="mileage" min="0" max="500000" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="num_owners">Number of Previous Owners</label>
+                                    <input type="number" id="num_owners" name="num_owners" min="0" max="20" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="interior_material">Interior Material</label>
+                                    <select id="interior_material" name="interior_material" required>
+                                        <option value="">Select Material</option>
+                                        <option value="leather">Leather</option>
+                                        <option value="suede">Suede</option>
+                                        <option value="carbon_fiber">Carbon Fiber</option>
+                                        <option value="alcantara">Alcantara</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="brake_type">Brake Type</label>
+                                    <select id="brake_type" name="brake_type" required>
+                                        <option value="">Select Brake Type</option>
+                                        <option value="steel">Steel</option>
+                                        <option value="carbon-ceramic">Carbon Ceramic</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tire_brand">Tire Brand</label>
+                                    <select id="tire_brand" name="tire_brand" required>
+                                        <option value="">Select Tire Brand</option>
+                                        <option value="Michelin">Michelin</option>
+                                        <option value="Bridgestone">Bridgestone</option>
+                                        <option value="Goodyear">Goodyear</option>
+                                        <option value="Continental">Continental</option>
+                                        <option value="Pirelli">Pirelli</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <h3>Service & Warranty</h3>
+                                <div class="form-group">
+                                    <label for="last_service_date">Last Service Date</label>
+                                    <input type="date" id="last_service_date" name="last_service_date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="service_history">Service History</label>
+                                    <select id="service_history" name="service_history" required>
+                                        <option value="">Select Service History</option>
+                                        <option value="authorized">Authorized</option>
+                                        <option value="independent">Independent</option>
+                                        <option value="none">None</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="warranty_years">Warranty Years Remaining</label>
+                                    <input type="number" id="warranty_years" name="warranty_years" min="0" max="20" step="0.1" required>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <h3>Damage Information</h3>
+                                <div class="form-group">
+                                    <label for="damage_cost">Damage Cost ($)</label>
+                                    <input type="number" id="damage_cost" name="damage_cost" min="0" step="0.01" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="damage_type">Damage Type</label>
+                                    <select id="damage_type" name="damage_type" required>
+                                        <option value="">Select Damage Type</option>
+                                        <option value="nan">No Damage</option>
+                                        <option value="Minor">Minor Cosmetic</option>
+                                        <option value="minor">Minor</option>
+                                        <option value="major">Major</option>
+                                        <option value="totaled">Totaled</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <h3>Special Features</h3>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="carbon_fiber_body" name="carbon_fiber_body" value="1">
+                                    <label for="carbon_fiber_body">Carbon Fiber Body</label>
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="aero_package" name="aero_package" value="1">
+                                    <label for="aero_package">Aerodynamic Package</label>
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="limited_edition" name="limited_edition" value="1">
+                                    <label for="limited_edition">Limited Edition</label>
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="has_warranty" name="has_warranty" value="1">
+                                    <label for="has_warranty">Has Active Warranty</label>
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="non_original_parts" name="non_original_parts" value="1">
+                                    <label for="non_original_parts">Non-Original Parts</label>
+                                </div>
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="damage" name="damage" value="1">
+                                    <label for="damage">Has Damage</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="submit-section">
+                            <button type="submit" class="btn-primary btn-large">Predict Car Value</button>
+                        </div>
+                    </form>
+                    <div id="loading" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Predicting car value...</p>
+                    </div>
+                    <div id="predictionResult" class="prediction-result" style="display: none;">
+                        <h3>Prediction Complete</h3>
+                        <div class="price" id="predictedPrice">$0</div>
+                        <p id="predictionDetails"></p>
+                    </div>
+                    <div id="errorMessage" class="error-message" style="display: none;">
+                        <strong>Error:</strong> <span id="errorText"></span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/auth-utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
