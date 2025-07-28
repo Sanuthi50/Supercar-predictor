@@ -79,13 +79,7 @@ A Flask-based web application for predicting supercar prices using machine learn
 python run.py
 ```
 
-### Production Mode
-```bash
-export ENVIRONMENT=production
-python run.py
-```
-
-The application will be available at `http://localhost:5000`
+The application will be available at `[http://localhost:5000](http://127.0.0.1:5000/home)`
 
 ## API Endpoints
 
@@ -100,61 +94,9 @@ The application will be available at `http://localhost:5000`
 - `GET /health` - Check application health and status
 
 ### Predictions
-- `POST /predict` - Make a car price prediction
+- `POST /` - Make a car price prediction
 - `GET /predictions/history` - Get prediction history
-- `GET /predictions/<id>` - Get specific prediction
 - `GET /predictions/stats` - Get prediction statistics
-
-### Database Management
-- `POST /database/init` - Initialize database tables
-
-### Testing
-- `GET /test-prediction` - Test prediction with sample data
-
-## Example API Usage
-
-### Register a User
-```bash
-curl -X POST http://localhost:5000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "testuser",
-    "email": "test@example.com",
-    "password": "password123",
-    "first_name": "John",
-    "last_name": "Doe"
-  }'
-```
-
-### Login
-```bash
-curl -X POST http://localhost:5000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "testuser",
-    "password": "password123"
-  }'
-```
-
-### Make a Prediction
-```bash
-curl -X POST http://localhost:5000/predict \
-  -H "Content-Type: application/json" \
-  -d '{
-    "year": 2023,
-    "brand": "Ferrari",
-    "model": "SF90 Stradale",
-    "color": "Rosso Corsa",
-    "horsepower": 986,
-    "torque": 800,
-    "weight_kg": 1570,
-    "zero_to_60_s": 2.5,
-    "top_speed_mph": 211,
-    "mileage": 1500,
-    "transmission": "Automatic",
-    "drivetrain": "AWD"
-  }'
-```
 
 ### Get Prediction History
 ```bash
@@ -186,45 +128,11 @@ SuperCarPrediction/
 ├── config.py               # Configuration settings
 ├── run.py                  # Application entry point
 ├── init_db.py             # Database initialization
-├── create_foreign_key.py  # Foreign key constraints
-├── test_complete_system.py # Complete system testing
-├── test_auth.py           # Authentication testing
-├── test_app.py            # Application testing
-├── test_prediction.py     # Prediction API testing
-├── test_frontend.html     # Frontend testing
+├── .env                   # EnvironmentFile 
+├── supercar_price_prediction_model.pkl # Machine Learning model's pkl file
 ├── requirements.txt       # Python dependencies
 └── README.md             # This file
 ```
-
-## Testing
-
-### Test the Complete System (Recommended)
-```bash
-python test_complete_system.py
-```
-This tests the entire system including authentication, predictions, history, and statistics.
-
-### Test Authentication System
-```bash
-python test_auth_fixed.py
-```
-This tests the authentication system with proper session handling.
-
-### Test Basic Application
-```bash
-python test_app.py
-```
-
-### Test Prediction API
-```bash
-python test_prediction.py
-```
-
-### Test Frontend
-Open `test_frontend.html` in your browser to test the frontend functionality.
-
-## Troubleshooting
-
 ### Common Issues
 
 1. **Database Connection Failed**:
