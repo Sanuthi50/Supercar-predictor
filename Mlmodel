@@ -1,0 +1,499 @@
+#
+import pandas as pd
+import numpy as np
+from IPython.display import display, Markdown
+from sklearn.model_selection import train_test_split, cross_validate, cross_val_score
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, KBinsDiscretizer
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+from sklearn.ensemble import (RandomForestRegressor, GradientBoostingRegressor,
+                             AdaBoostRegressor, ExtraTreesRegressor)
+from sklearn.svm import SVR
+from sklearn.linear_model import (LinearRegression, Ridge, Lasso, ElasticNet)
+from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
+from sklearn.neural_network import MLPRegressor
+from sklearn.kernel_ridge import KernelRidge
+import matplotlib.pyplot as plt
+import seaborn as sns
+import joblib
+import warnings
+warnings.filterwarnings('ignore')
+# Set style for better plots
+plt.style.use('seaborn-v0_8')
+sns.set_palette("husl")
+# Data Collection And Loading
+df = pd.read_csv('/content/drive/MyDrive/CarPrediction/supercars_train.csv')
+test_df = pd.read_csv('/content/drive/MyDrive/CarPrediction/supercars_test.csv')
+
+print(f"Training Data Shape: {df.shape}")
+print(f"Test Data Shape: {test_df.shape}")
+# Data Overview
+print("\nTraining Data Overview:")
+print(df.head())
+print("\nData Types:")
+print(df.dtypes)
+print("\nStatistical Summary:")
+print(df.describe())
+# Data Overview
+print("\nTraining Data Overview:")
+print(df.head())
+print("\nData Types:")
+print(df.dtypes)
+print("\nStatistical Summary:")
+print(df.describe())
+#Data Visualization (EDA)
+# Figure 1 : Price Desrtibution Analysis
+fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+
+# Price distribution
+axes[0,0].hist(df['price'], bins=50, alpha=0.7, color='skyblue', edgecolor='black')
+axes[0,0].set_title('Price Distribution', fontsize=14, fontweight='bold')
+axes[0,0].set_xlabel('Price ($)')
+axes[0,0].set_ylabel('Frequency')
+
+# Log-transformed price distribution
+axes[0,1].hist(np.log1p(df['price']), bins=50, alpha=0.7, color='lightcoral', edgecolor='black')
+axes[0,1].set_title('Log-transformed Price Distribution', fontsize=14, fontweight='bold')
+axes[0,1].set_xlabel('Log(Price + 1)')
+axes[0,1].set_ylabel('Frequency')
+
+# Box plot of price by brand (top 10)
+top_brands = df['brand'].value_counts().nlargest(10).index
+df_top_brands = df[df['brand'].isin(top_brands)]
+axes[1,0].boxplot([df_top_brands[df_top_brands['brand'] == brand]['price']
+                   for brand in top_brands], labels=top_brands)
+axes[1,0].set_title('Price Distribution by Top 10 Brands', fontsize=14, fontweight='bold')
+axes[1,0].set_xlabel('Brand')
+axes[1,0].set_ylabel('Price ($)')
+axes[1,0].tick_params(axis='x', rotation=45)
+
+# Price vs Year scatter plot
+axes[1,1].scatter(df['year'], df['price'], alpha=0.6, color='green')
+axes[1,1].set_title('Price vs Year', fontsize=14, fontweight='bold')
+axes[1,1].set_xlabel('Year')
+axes[1,1].set_ylabel('Price ($)')
+
+plt.tight_layout()
+plt.show()
+# Figure 2 : Feature Relationships
+fig, axes = plt.subplots(2, 3, figsize=(18, 12))
+
+# Horsepower vs Price
+axes[0,0].scatter(df['horsepower'], df['price'], alpha=0.6, color='purple')
+axes[0,0].set_title('Horsepower vs Price', fontsize=12, fontweight='bold')
+axes[0,0].set_xlabel('Horsepower')
+axes[0,0].set_ylabel('Price ($)')
+
+# Mileage vs Price
+axes[0,1].scatter(df['mileage'], df['price'], alpha=0.6, color='orange')
+axes[0,1].set_title('Mileage vs Price', fontsize=12, fontweight='bold')
+axes[0,1].set_xlabel('Mileage')
+axes[0,1].set_ylabel('Price ($)')
+
+# Weight vs Price
+axes[0,2].scatter(df['weight_kg'], df['price'], alpha=0.6, color='brown')
+axes[0,2].set_title('Weight vs Price', fontsize=12, fontweight='bold')
+axes[0,2].set_xlabel('Weight (kg)')
+axes[0,2].set_ylabel('Price ($)')
+
+# Price by Engine Config
+if 'engine_config' in df.columns:
+    sns.boxplot(x='engine_config', y='price', data=df, ax=axes[1,0], palette='husl')
+    axes[1,0].set_title('Price by Engine Config', fontsize=12, fontweight='bold')
+    axes[1,0].set_xlabel('Engine Config')
+    axes[1,0].set_ylabel('Price ($)')
+    axes[1,0].tick_params(axis='x', rotation=45)
+
+# Car Age vs Price (derived feature)
+df_temp = df.copy()
+df_temp['car_age'] = 2025 - df_temp['year']
+axes[1,1].scatter(df_temp['car_age'], df['price'], alpha=0.6, color='teal')
+axes[1,1].set_title('Car Age vs Price', fontsize=12, fontweight='bold')
+axes[1,1].set_xlabel('Car Age (years)')
+axes[1,1].set_ylabel('Price ($)')
+
+# Damage Cost vs Price
+if 'damage_cost' in df.columns:
+    df_non_null = df[df['damage_cost'].notnull()]
+    axes[1,2].scatter(df_non_null['damage_cost'], df_non_null['price'], alpha=0.6, color='red')
+    axes[1,2].set_title('Damage Cost vs Price', fontsize=12, fontweight='bold')
+    axes[1,2].set_xlabel('Damage Cost ($)')
+    axes[1,2].set_ylabel('Price ($)')
+    axes[1,2].tick_params(axis='x', rotation=45)
+
+plt.tight_layout()
+plt.show()
+# Figure 3 : Correlation HeatMap
+numeric_cols = df.select_dtypes(include=[np.number]).columns
+plt.figure(figsize=(12, 10))
+correlation_matrix = df[numeric_cols].corr()
+mask = np.triu(np.ones_like(correlation_matrix, dtype=bool))
+sns.heatmap(correlation_matrix, mask=mask, annot=True, fmt='.2f',
+            cmap='RdYlBu_r', center=0, square=True, linewidths=0.5)
+plt.title('Feature Correlation Matrix', fontsize=16, fontweight='bold')
+plt.tight_layout()
+plt.show()
+# Price distribution
+axes[0,0].hist(df['price'], bins=50, alpha=0.7, color='skyblue', edgecolor='black')
+axes[0,0].set_title('Price Distribution', fontsize=14, fontweight='bold')
+axes[0,0].set_xlabel('Price ($)')
+axes[0,0].set_ylabel('Frequency')
+
+# Log-transformed price distribution
+axes[0,1].hist(np.log1p(df['price']), bins=50, alpha=0.7, color='lightcoral', edgecolor='black')
+axes[0,1].set_title('Log-transformed Price Distribution', fontsize=14, fontweight='bold')
+axes[0,1].set_xlabel('Log(Price + 1)')
+axes[0,1].set_ylabel('Frequency')
+
+# Box plot of price by brand (top 10)
+top_brands = df['brand'].value_counts().nlargest(10).index
+df_top_brands = df[df['brand'].isin(top_brands)]
+axes[1,0].boxplot([df_top_brands[df_top_brands['brand'] == brand]['price']
+                   for brand in top_brands], labels=top_brands)
+axes[1,0].set_title('Price Distribution by Top 10 Brands', fontsize=14, fontweight='bold')
+axes[1,0].set_xlabel('Brand')
+axes[1,0].set_ylabel('Price ($)')
+axes[1,0].tick_params(axis='x', rotation=45)
+
+# Price vs Year scatter plot
+axes[1,1].scatter(df['year'], df['price'], alpha=0.6, color='green')
+axes[1,1].set_title('Price vs Year', fontsize=14, fontweight='bold')
+axes[1,1].set_xlabel('Year')
+axes[1,1].set_ylabel('Price ($)')
+
+plt.tight_layout()
+plt.show()
+# Figure 2 : Feature Relationships
+
+fig, axes = plt.subplots(2, 3, figsize=(18, 12))
+
+# Horsepower vs Price
+axes[0,0].scatter(df['horsepower'], df['price'], alpha=0.6, color='purple')
+axes[0,0].set_title('Horsepower vs Price', fontsize=12, fontweight='bold')
+axes[0,0].set_xlabel('Horsepower')
+axes[0,0].set_ylabel('Price ($)')
+
+# Mileage vs Price
+axes[0,1].scatter(df['mileage'], df['price'], alpha=0.6, color='orange')
+axes[0,1].set_title('Mileage vs Price', fontsize=12, fontweight='bold')
+axes[0,1].set_xlabel('Mileage')
+axes[0,1].set_ylabel('Price ($)')
+
+# Weight vs Price
+axes[0,2].scatter(df['weight_kg'], df['price'], alpha=0.6, color='brown')
+axes[0,2].set_title('Weight vs Price', fontsize=12, fontweight='bold')
+axes[0,2].set_xlabel('Weight (kg)')
+axes[0,2].set_ylabel('Price ($)')
+
+# Price by Engine Config
+if 'engine_config' in df.columns:
+    sns.boxplot(x='engine_config', y='price', data=df, ax=axes[1,0], palette='husl')
+    axes[1,0].set_title('Price by Engine Config', fontsize=12, fontweight='bold')
+    axes[1,0].set_xlabel('Engine Config')
+    axes[1,0].set_ylabel('Price ($)')
+    axes[1,0].tick_params(axis='x', rotation=45)
+
+# Car Age vs Price (derived feature)
+df_temp = df.copy()
+df_temp['car_age'] = 2025 - df_temp['year']
+axes[1,1].scatter(df_temp['car_age'], df['price'], alpha=0.6, color='teal')
+axes[1,1].set_title('Car Age vs Price', fontsize=12, fontweight='bold')
+axes[1,1].set_xlabel('Car Age (years)')
+axes[1,1].set_ylabel('Price ($)')
+
+# Damage Cost vs Price
+if 'damage_cost' in df.columns:
+    df_non_null = df[df['damage_cost'].notnull()]
+    axes[1,2].scatter(df_non_null['damage_cost'], df_non_null['price'], alpha=0.6, color='red')
+    axes[1,2].set_title('Damage Cost vs Price', fontsize=12, fontweight='bold')
+    axes[1,2].set_xlabel('Damage Cost ($)')
+    axes[1,2].set_ylabel('Price ($)')
+    axes[1,2].tick_params(axis='x', rotation=45)
+
+plt.tight_layout()
+plt.show()
+# Figure 3 : Correlation HeatMap
+
+
+numeric_cols = df.select_dtypes(include=[np.number]).columns
+plt.figure(figsize=(12, 10))
+correlation_matrix = df[numeric_cols].corr()
+mask = np.triu(np.ones_like(correlation_matrix, dtype=bool))
+sns.heatmap(correlation_matrix, mask=mask, annot=True, fmt='.2f',
+            cmap='RdYlBu_r', center=0, square=True, linewidths=0.5)
+plt.title('Feature Correlation Matrix', fontsize=16, fontweight='bold')
+plt.tight_layout()
+plt.show()
+# Figure 4 : Pair Plot for Key Numeric Features
+key_features = ['price', 'horsepower', 'mileage', 'year']
+if all(col in df.columns for col in key_features):
+    g = sns.pairplot(df[key_features], diag_kind='hist', plot_kws={'alpha': 0.6})
+    g.fig.suptitle('Pair Plot of Key Features', y=1.02, fontsize=16, fontweight='bold')
+    plt.show()
+# Set Target
+target = 'price'
+X_train = df.drop(columns=[target, 'id'])
+y_train = df[target]
+X_test = test_df.drop(columns=['id'])
+test_ids = test_df['id']
+# Preprocessing
+cat_cols = X_train.select_dtypes(include=['object', 'bool']).columns
+num_cols = X_train.select_dtypes(include=['int64', 'float64']).columns
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', StandardScaler(), num_cols),
+        ('cat', OneHotEncoder(handle_unknown='ignore'), cat_cols)
+    ])
+#Model Selection
+models = {
+    'Linear Regression': LinearRegression(),
+    'Ridge': Ridge(random_state=42),
+    'Lasso': Lasso(random_state=42),
+    'ElasticNet': ElasticNet(random_state=42),
+    'SVR': SVR(),
+    'Random Forest': RandomForestRegressor(random_state=42),
+    'Gradient Boosting': GradientBoostingRegressor(random_state=42),
+    'XGBoost': XGBRegressor(random_state=42),
+    'LightGBM': LGBMRegressor(random_state=42),
+    'AdaBoost': AdaBoostRegressor(random_state=42),
+    'Extra Trees': ExtraTreesRegressor(random_state=42),
+    'MLP': MLPRegressor(hidden_layer_sizes=(100,50), max_iter=1000, random_state=42),
+    'Kernel Ridge': KernelRidge()
+}
+# Evaluation Metrix
+scoring = {
+    'r2': 'r2',
+    'neg_rmse': 'neg_root_mean_squared_error',
+    'neg_mae': 'neg_mean_absolute_error'
+}
+#Handling Missing Values & Preprocessing
+from sklearn.impute import SimpleImputer
+# Numeric preprocessing: impute missing with mean, then scale
+numeric_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='mean')),
+    ('scaler', StandardScaler())
+])
+
+# Categorical preprocessing: fill missing with 'missing', then one-hot encode
+categorical_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
+    ('onehot', OneHotEncoder(handle_unknown='ignore'))
+])
+
+# Combine numeric and categorical preprocessing
+preprocessor = ColumnTransformer(transformers=[
+    ('num', numeric_transformer, num_cols),
+    ('cat', categorical_transformer, cat_cols)
+])
+# Building & Training Model Pipelines
+results = []
+
+for name, model in models.items():
+    pipe = Pipeline(steps=[
+        ('preprocessor', preprocessor),  # Include preprocessing
+        ('model', model)                # Attach the ML model
+    ])
+
+    # Perform cross-validation
+    cv_results = cross_validate(pipe, X_train, y_train,
+                                cv=5, scoring=scoring, n_jobs=-1)
+
+    # Collect and store evaluation metrics
+    results.append({
+        'Model': name,
+        'R2 (mean)': cv_results['test_r2'].mean(),
+        'R2 (std)': cv_results['test_r2'].std(),
+        'RMSE': -cv_results['test_neg_rmse'].mean() if 'test_neg_root_mean_squared_error' in cv_results else -cv_results['test_neg_rmse'].mean(),
+        'MAE': -cv_results['test_neg_mean_absolute_error'].mean() if 'test_neg_mean_absolute_error' in cv_results else -cv_results['test_neg_mae'].mean(),
+        'Fit Time': cv_results['fit_time'].mean()
+    })
+# Model Evaluation (Cross-Validation Metrics Collection)
+results_df = pd.DataFrame(results).sort_values(by='R2 (mean)', ascending=False)
+print(results_df)
+#Model Comparison
+# Display results
+results_df = pd.DataFrame(results).sort_values('R2 (mean)', ascending=False)
+print("\nModel Performance Comparison:")
+print(results_df.to_string(float_format="%.3f"))
+def compare_models(results_df):
+    """Generate comprehensive model comparison visualizations and statistics"""
+    # Figure 1 : Metrix Comparison Plot
+    print("\nFigure 1 : Metrix Comparison Plot")
+    plt.figure(figsize=(15, 8))
+    metrics = ['R2 (mean)', 'RMSE', 'MAE', 'Fit Time']
+
+    for i, metric in enumerate(metrics, 1):
+        plt.subplot(2, 2, i)
+        ax = sns.barplot(data=results_df, y='Model', x=metric, palette='coolwarm')
+        plt.title(f'Model Comparison by {metric}')
+        if metric == 'Fit Time':
+            plt.xlabel('Seconds')
+        elif metric == 'R2 (mean)':
+            plt.xlim(0, 1)  # R² range
+        plt.tight_layout()
+
+    plt.suptitle('Comprehensive Model Performance Comparison', y=1.02)
+    plt.show()
+    # Figure 2 :  Pairwise Comparison Matrix
+    print("\nFigure 2 :  Pairwise Comparison Matrix")
+    from scipy.stats import ttest_rel
+
+    # Get cross-validation scores for best models
+    top_models = results_df.head(5)['Model'].values
+    cv_scores = {}
+
+    for name in top_models:
+        pipe = Pipeline(steps=[
+            ('preprocessor', preprocessor),
+            ('model', models[name])
+        ])
+        cv_scores[name] = cross_val_score(pipe, X_train, y_train,
+                                        scoring='r2', cv=5)
+
+    # Create pairwise comparison matrix
+    comparison_matrix = pd.DataFrame(index=top_models, columns=top_models)
+
+    for model1 in top_models:
+        for model2 in top_models:
+            _, p_value = ttest_rel(cv_scores[model1], cv_scores[model2])
+            comparison_matrix.loc[model1, model2] = p_value
+
+    # Visualize significance
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(comparison_matrix.astype(float),
+                annot=True, fmt=".3f", cmap="coolwarm",
+                cbar_kws={'label': 'p-value'})
+    plt.title('Pairwise Model Comparison (p-values from paired t-tests)')
+    plt.xlabel('Model')
+    plt.ylabel('Model')
+    plt.tight_layout()
+    plt.show()
+    # Figure 3 :  Performance vs Complexity Trade-off
+    print("\nFigure 3 :  Performance vs Complexity Trade-off")
+    plt.figure(figsize=(10, 6))
+    sns.scatterplot(data=results_df, x='Fit Time', y='R2 (mean)',
+                   hue='Model', s=150, palette='viridis')
+    plt.title('Performance vs Training Time Trade-off')
+    plt.xlabel('Training Time (seconds)')
+    plt.ylabel('R² Score')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    return comparison_matrix
+#Run the comparison
+model_comparison = compare_models(results_df)
+print("\nStatistical Comparison of Top Models:")
+print(model_comparison)
+# Figure 4 : Visualize Comparison Results
+plt.figure(figsize=(12, 6))
+sns.barplot(data=results_df, x='R2 (mean)', y='Model', palette='viridis')
+plt.title('Model Comparison by R² Score')
+plt.xlabel('R² Score')
+plt.tight_layout()
+plt.show()
+# Train the Best Model
+best_model_name = results_df.iloc[0]['Model']
+best_model = models[best_model_name]
+
+final_pipe = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('model', best_model)
+])
+
+final_pipe.fit(X_train, y_train)
+train_pred = final_pipe.predict(X_train)
+test_pred = final_pipe.predict(X_test)
+print(f"\nFinal Training Evaluation for {best_model_name}:")
+print(f"R²: {r2_score(y_train, train_pred):.4f}")
+# Calculate RMSE manually by taking the square root of MSE
+print(f"RMSE: {np.sqrt(mean_squared_error(y_train, train_pred)):,.2f}")
+print(f"MAE: {mean_absolute_error(y_train, train_pred):,.2f}")
+# Feature Importance (If Available)
+if hasattr(best_model, 'feature_importances_'):
+    preprocessor.fit(X_train)
+    feature_names = (list(num_cols) +
+                    list(final_pipe.named_steps['preprocessor']
+                        .named_transformers_['cat']
+                        .named_steps['onehot']
+                        .get_feature_names_out(cat_cols)))
+
+    importances = final_pipe.named_steps['model'].feature_importances_
+    feat_imp = pd.Series(importances, index=feature_names)
+    top_feats = feat_imp.sort_values(ascending=False).head(20)
+
+    plt.figure(figsize=(10, 8))
+    top_feats.plot(kind='barh')
+    plt.title(f'{best_model_name} - Top 20 Features')
+    plt.tight_layout()
+    plt.show()
+# Residual Analysis and Regression Confusion Matrix for Each Model
+fitted_pipelines = {}
+model_preds = {}
+
+for name, model in models.items():
+    print(f"\nResidual Analysis for {name}:")
+    pipe = Pipeline(steps=[
+        ('preprocessor', preprocessor),
+        ('model', model)
+    ])
+    pipe.fit(X_train, y_train)
+    train_pred = pipe.predict(X_train)
+    fitted_pipelines[name] = pipe
+    model_preds[name] = train_pred
+    residuals = y_train - train_pred
+
+    # Plot the distribution of residuals
+    plt.figure(figsize=(10, 6))
+    sns.histplot(residuals, bins=50, kde=True)
+    plt.title(f'Distribution of Residuals ({name} - Training Data)')
+    plt.xlabel('Residuals (Actual Price - Predicted Price)')
+    plt.ylabel('Frequency')
+    plt.grid(True)
+    plt.show()
+
+    # Plot residuals vs predicted values
+    plt.figure(figsize=(10, 6))
+    plt.scatter(train_pred, residuals, alpha=0.6)
+    plt.title(f'Residuals vs Predicted Prices ({name} - Training Data)')
+    plt.xlabel('Predicted Price ($)')
+    plt.ylabel('Residuals (Actual Price - Predicted Price)')
+    plt.axhline(y=0, color='r', linestyle='--')
+    plt.grid(True)
+    plt.show()
+
+    # Look at instances with largest residuals
+    largest_residuals = pd.DataFrame({'actual_price': y_train, 'predicted_price': train_pred, 'residual': residuals}).sort_values(by='residual', ascending=False)
+    print(f"\nTop 10 instances with largest positive residuals ({name} - Under-estimations):")
+    display(largest_residuals.head(10))
+
+    print(f"\nTop 10 instances with largest negative residuals ({name} - Over-estimations):")
+    display(largest_residuals.tail(10))
+
+    # Regression confusion matrix (binned heatmap)
+    n_bins = 10
+    y_true = np.array(y_train).reshape(-1, 1)
+    y_pred = np.array(train_pred).reshape(-1, 1)
+    kbin = KBinsDiscretizer(n_bins=n_bins, encode='ordinal', strategy='quantile')
+    y_true_binned = kbin.fit_transform(y_true).astype(int).flatten()
+    y_pred_binned = kbin.transform(y_pred).astype(int).flatten()
+    cm = pd.crosstab(y_true_binned, y_pred_binned)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    plt.xlabel('Binned Predicted')
+    plt.ylabel('Binned Actual')
+    plt.title(f'Regression Confusion Matrix (Binned Heatmap) - {name}')
+    plt.tight_layout()
+    plt.show()
+# Submission 
+submission_df = pd.DataFrame({
+    'id': test_ids,
+    'price': test_pred
+})
+# Save to CSV
+submission_df.to_csv('submission.csv', index=False)
+print("\nSubmission file saved as 'submission.csv'")
+
